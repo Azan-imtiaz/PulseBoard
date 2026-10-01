@@ -1,0 +1,760 @@
+openapi: 3.1.0
+info:
+  title: PulseBoard API
+  version: 1.0.0
+  description: |
+    The same API the PulseBoard web app uses.
+
+    **Auth.** Sign up with `POST /auth/register`, confirm the emailed code with
+    `POST /auth/verify-email`, then call `POST /auth/login` to get a short-lived access token and send it as
+    `Authorization: Bearer <token>`. The refresh token is set as an httpOnly cookie
+    scoped to `/api/v1/auth`; call `POST /auth/refresh` to rotate it and get a new
+    access token.
+
+    **Rate limits.** Auth endpoints allow 10 requests per minute per IP. Everything else
+    allows 300 per minute per user, and AI endpoints 20 per minute per user. Responses
+    carry `RateLimit-Limit` and `RateLimit-Remaining`; a 429 includes `Retry-After`.
+
+    **Errors** always look like `{ "error": { "message": "...", "code": "..." } }`.
+
+    **Realtime.** Connect with Socket.io to the same host, passing `auth: { token }`.
+    Emit `board:join` with a board id to receive `task:created`, `task:updated`,
+    `task:deleted`, `comment:created`, `presence` and `cursor:move` events for it.
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Workspaces
+  - name: Boards
+  - name: Tasks
+  - name: Comments
+  - name: Attachments
+  - name: AI
+  - name: Contact
+security:
+  - bearer: []
+
+paths:
+  /auth/username-available:
+    get:
+      tags: [Auth]
+      summary: Check whether a username can be used, with suggestions if not
+      security: []
+      parameters:
+        - { name: username, in: query, required: true, schema: { type: string } }
+        - { name: name, in: query, schema: { type: string }, description: Display name, used to build suggestions }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username: { type: string }
+                  available: { type: boolean }
+                  reason: { type: [string, 'null'] }
+                  suggestions:
+                    type: array
+                    items: { type: string }
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create an account and email a 6-digit verification code
+      description: |
+        Does not sign you in. Confirm the email with `POST /auth/verify-email`.
+        Usernames are 3–20 characters of lowercase letters, digits, `.` and `_`.
+        A taken username returns `409 username_taken` with `suggestions`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, username, email, password]
+              properties:
+                name: { type: string }
+                username: { type: string, example: maya.chen }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+      responses:
+        '201':
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: verification_required }
+                  email: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /auth/verify-email:
+    post:
+      tags: [Auth]
+      summary: Confirm an email with its code and sign in
+      description: Codes expire after 10 minutes and stop working after 5 wrong attempts.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string, example: '482913' }
+      responses:
+        '200': { $ref: '#/components/responses/Session' }
+        '400': { $ref: '#/components/responses/Error' }
+  /auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Send a new verification code
+      description: At most once a minute per account (`429 otp_cooldown` with `retryAfter` seconds).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Sent if the account exists and isn't verified yet }
+        '429': { $ref: '#/components/responses/Error' }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Sign in with email or username
+      description: An unverified account gets `403 email_not_verified` (with `email`) and a fresh code.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string, description: Email or username }
+                password: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Session' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Email a password reset code
+      description: Always returns 200, so it can't be used to find out which emails have accounts.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Sent if the account exists }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Set a new password with the emailed code
+      description: Signs out every other session for the account, then signs you in.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, password]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200': { $ref: '#/components/responses/Session' }
+        '400': { $ref: '#/components/responses/Error' }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate the refresh cookie and get a new access token
+      description: |
+        Returns `409 refresh_race` if the same refresh token was just rotated by a
+        concurrent request; retry once and the new cookie will be used. Replaying an
+        older, already-rotated token revokes every session that descends from the
+        same login.
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Session' }
+        '401': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: End the current session
+      security: []
+      responses:
+        '204': { description: Signed out }
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: The signed-in user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      summary: Workspaces you belong to
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workspaces:
+                    type: array
+                    items: { $ref: '#/components/schemas/Workspace' }
+    post:
+      tags: [Workspaces]
+      summary: Create a workspace (you become its owner)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201': { description: Created }
+  /workspaces/{workspaceId}:
+    parameters: [{ $ref: '#/components/parameters/workspaceId' }]
+    patch:
+      tags: [Workspaces]
+      summary: Rename a workspace
+      description: Requires **admin**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Workspaces]
+      summary: Delete a workspace and everything in it
+      description: Requires **owner**. Deletes every board, task, comment and attachment in the workspace.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Error' }
+  /workspaces/{workspaceId}/members:
+    parameters: [{ $ref: '#/components/parameters/workspaceId' }]
+    get:
+      tags: [Workspaces]
+      summary: List members
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items: { $ref: '#/components/schemas/Member' }
+    post:
+      tags: [Workspaces]
+      summary: Add an existing user by email
+      description: Requires **admin**. Admins can add members; only owners can add admins.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, enum: [admin, member], default: member }
+      responses:
+        '201': { description: Added }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /workspaces/{workspaceId}/members/{userId}:
+    parameters:
+      - { $ref: '#/components/parameters/workspaceId' }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    patch:
+      tags: [Workspaces]
+      summary: Change a member's role
+      description: You can only change the role of someone ranked below you, to a role below your own.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [admin, member] }
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Workspaces]
+      summary: Remove a member, or leave the workspace
+      responses:
+        '204': { description: Removed }
+        '403': { $ref: '#/components/responses/Error' }
+
+  /workspaces/{workspaceId}/boards:
+    parameters: [{ $ref: '#/components/parameters/workspaceId' }]
+    get:
+      tags: [Boards]
+      summary: List boards in a workspace
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  boards:
+                    type: array
+                    items: { $ref: '#/components/schemas/Board' }
+    post:
+      tags: [Boards]
+      summary: Create a board
+      description: Requires **admin**.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, key]
+              properties:
+                name: { type: string }
+                key: { type: string, pattern: '^[A-Z][A-Z0-9]{1,5}$', example: PLAT }
+                description: { type: string }
+      responses:
+        '201': { description: Created }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /boards/{boardId}:
+    parameters: [{ $ref: '#/components/parameters/boardId' }]
+    get:
+      tags: [Boards]
+      summary: Full board state
+      description: The board, all of its tasks, the workspace's members and the workflow rules.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  board: { $ref: '#/components/schemas/Board' }
+                  tasks:
+                    type: array
+                    items: { $ref: '#/components/schemas/Task' }
+                  members:
+                    type: array
+                    items: { $ref: '#/components/schemas/Member' }
+                  role: { type: string, enum: [owner, admin, member] }
+                  workflow:
+                    type: object
+                    properties:
+                      statuses:
+                        type: array
+                        items: { $ref: '#/components/schemas/Status' }
+                      transitions:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items: { $ref: '#/components/schemas/Status' }
+    patch:
+      tags: [Boards]
+      summary: Update a board
+      description: Requires **admin**.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '200': { description: OK }
+    delete:
+      tags: [Boards]
+      summary: Delete a board and everything on it
+      description: Requires **admin**.
+      responses:
+        '204': { description: Deleted }
+
+  /boards/{boardId}/tasks:
+    parameters: [{ $ref: '#/components/parameters/boardId' }]
+    post:
+      tags: [Tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TaskInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Task' }
+  /tasks/{taskId}:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    get:
+      tags: [Tasks]
+      summary: Get a task
+      responses:
+        '200': { $ref: '#/components/responses/Task' }
+    patch:
+      tags: [Tasks]
+      summary: Update task fields
+      description: Status changes go through `POST /tasks/{taskId}/move`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/TaskInput' }
+                - type: object
+                  properties:
+                    dependsOn:
+                      type: array
+                      items: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/Task' }
+        '400': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Tasks]
+      summary: Delete a task
+      description: Admins can delete any task; members only tasks they created.
+      responses:
+        '204': { description: Deleted }
+        '403': { $ref: '#/components/responses/Error' }
+  /tasks/{taskId}/move:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    post:
+      tags: [Tasks]
+      summary: Change status and/or position
+      description: |
+        Enforces the board workflow. A task needs an assignee to start, can't start or
+        finish while it depends on open tasks, and can only reach `done` from `in_review`.
+        Violations return `422 invalid_transition` with a readable message.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status, position]
+              properties:
+                status: { $ref: '#/components/schemas/Status' }
+                position: { type: number }
+      responses:
+        '200': { $ref: '#/components/responses/Task' }
+        '422': { $ref: '#/components/responses/Error' }
+
+  /tasks/{taskId}/comments:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    get:
+      tags: [Comments]
+      summary: List comments, oldest first
+      responses:
+        '200': { description: OK }
+    post:
+      tags: [Comments]
+      summary: Add a comment
+      description: Mentioned members receive an email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { type: string, description: 'Mention people with @username.' }
+      responses:
+        '201': { description: Created }
+
+  /tasks/{taskId}/attachments/upload-url:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    post:
+      tags: [Attachments]
+      summary: Get a signed URL to upload a file directly to storage
+      description: PUT the file to `uploadUrl` with the returned headers, then confirm it with `POST /tasks/{taskId}/attachments`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, contentType, size]
+              properties:
+                name: { type: string }
+                contentType: { type: string }
+                size: { type: integer, maximum: 26214400 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key: { type: string }
+                  uploadUrl: { type: string }
+                  headers: { type: object }
+        '503': { $ref: '#/components/responses/Error' }
+  /tasks/{taskId}/attachments:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    post:
+      tags: [Attachments]
+      summary: Confirm an upload and attach it to the task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [key, name]
+              properties:
+                key: { type: string }
+                name: { type: string }
+      responses:
+        '201': { $ref: '#/components/responses/Task' }
+  /tasks/{taskId}/attachments/{attachmentId}/url:
+    parameters:
+      - { $ref: '#/components/parameters/taskId' }
+      - { name: attachmentId, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Attachments]
+      summary: Get a short-lived download URL
+      responses:
+        '200': { description: OK }
+
+  /ai/tasks/{taskId}/summary:
+    parameters: [{ $ref: '#/components/parameters/taskId' }]
+    post:
+      tags: [AI]
+      summary: Summarize a task's discussion
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary: { type: string, description: Markdown }
+                  commentCount: { type: integer }
+                  generatedAt: { type: string, format: date-time }
+        '503': { $ref: '#/components/responses/Error' }
+  /ai/boards/{boardId}/sprint-report:
+    parameters: [{ $ref: '#/components/parameters/boardId' }]
+    post:
+      tags: [AI]
+      summary: Generate a sprint report
+      description: Numbers are computed from board activity; the model only writes the narrative.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days: { type: integer, minimum: 7, maximum: 28, default: 14 }
+      responses:
+        '200': { description: OK }
+  /ai/boards/{boardId}/prioritize:
+    parameters: [{ $ref: '#/components/parameters/boardId' }]
+    post:
+      tags: [AI]
+      summary: Suggest priority changes for open tasks
+      responses:
+        '200': { description: OK }
+  /contact:
+    post:
+      tags: [Contact]
+      summary: Send a message to the team
+      description: >
+        Public, no authentication required. Emails CONTACT_EMAIL, with the
+        submitted name/email set as reply-to. Disabled (503) if CONTACT_EMAIL
+        isn't set. Rate-limited by IP.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, subject, message]
+              properties:
+                name: { type: string, maxLength: 100 }
+                email: { type: string, format: email }
+                subject: { type: string, maxLength: 150 }
+                message: { type: string, maxLength: 5000 }
+      responses:
+        '201': { description: Sent }
+        '503': { $ref: '#/components/responses/Error' }
+
+components:
+  securitySchemes:
+    bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    workspaceId: { name: workspaceId, in: path, required: true, schema: { type: string } }
+    boardId: { name: boardId, in: path, required: true, schema: { type: string } }
+    taskId: { name: taskId, in: path, required: true, schema: { type: string } }
+  responses:
+    Session:
+      description: Signed in. Also sets the refresh cookie.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              accessToken: { type: string }
+              user: { $ref: '#/components/schemas/User' }
+    Task:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              task: { $ref: '#/components/schemas/Task' }
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message: { type: string }
+            code: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        username: { type: string }
+        email: { type: string }
+        color: { type: string }
+    Member:
+      allOf:
+        - { $ref: '#/components/schemas/User' }
+        - type: object
+          properties:
+            role: { type: string, enum: [owner, admin, member] }
+    Workspace:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [owner, admin, member] }
+        memberCount: { type: integer }
+    Board:
+      type: object
+      properties:
+        id: { type: string }
+        workspaceId: { type: string }
+        name: { type: string }
+        key: { type: string }
+        description: { type: string }
+    Status:
+      type: string
+      enum: [backlog, todo, in_progress, blocked, in_review, done]
+    Priority:
+      type: string
+      enum: [none, low, medium, high, urgent]
+    TaskInput:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        assigneeId: { type: [string, 'null'] }
+        labels:
+          type: array
+          items: { type: string }
+        dueDate: { type: [string, 'null'], format: date-time }
+    Task:
+      type: object
+      properties:
+        id: { type: string }
+        boardId: { type: string }
+        key: { type: string, example: PLAT-42 }
+        number: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        assigneeId: { type: [string, 'null'] }
+        labels:
+          type: array
+          items: { type: string }
+        dueDate: { type: [string, 'null'], format: date-time }
+        dependsOn:
+          type: array
+          items: { type: string }
+        position: { type: number }
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              size: { type: integer }
+              contentType: { type: string }
+              uploadedAt: { type: string, format: date-time }
+        createdBy: { type: string }
+        startedAt: { type: [string, 'null'], format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
