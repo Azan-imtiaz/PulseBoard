@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Neutrals carry almost all of the interface; the accent is reserved
+ * for primary actions, focus, selection and "live" state. Hierarchy comes from size
+ * and weight first, color second.
+ */
+:root {
+  --canvas: #f9f9f8;
+  --surface: #ffffff;
+  --subtle: #f2f2f0;
+  --hover: #ececea;
+  --line: #e6e5e2;
+  --line-strong: #d6d5d1;
+  --fg: #19191a;
+  --fg-muted: #62615d;
+  --fg-faint: #9a9994;
+  --accent: oklch(0.54 0.19 264);
+  --accent-hover: oklch(0.49 0.19 264);
+  --accent-fg: #ffffff;
+  --accent-soft: oklch(0.54 0.19 264 / 0.1);
+  --danger: #d4383a;
+  --danger-soft: rgb(212 56 58 / 0.1);
+  --warn: #c2750a;
+  --ok: #2f8a4c;
+  --overlay: rgb(20 20 18 / 0.28);
+  --shadow-pop: 0 0 0 1px var(--line), 0 12px 32px -12px rgb(0 0 0 / 0.18), 0 2px 6px -2px rgb(0 0 0 / 0.06);
+  --shadow-lift: 0 0 0 1px var(--line-strong), 0 16px 32px -12px rgb(0 0 0 / 0.22);
+}
+
+.dark {
+  --canvas: #0d0d0f;
+  --surface: #141416;
+  --subtle: #1a1a1d;
+  --hover: #212125;
+  --line: #242428;
+  --line-strong: #323237;
+  --fg: #ececee;
+  --fg-muted: #9b9ba3;
+  --fg-faint: #66666e;
+  --accent: oklch(0.66 0.16 264);
+  --accent-hover: oklch(0.71 0.15 264);
+  --accent-fg: #0d0d0f;
+  --accent-soft: oklch(0.66 0.16 264 / 0.14);
+  --danger: #ef5b5b;
+  --danger-soft: rgb(239 91 91 / 0.12);
+  --warn: #e9a23b;
+  --ok: #4cc27a;
+  --overlay: rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 0 0 1px var(--line-strong), 0 16px 40px -12px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 0 0 1px var(--line-strong), 0 18px 36px -12px rgb(0 0 0 / 0.7);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-subtle: var(--subtle);
+  --color-hover: var(--hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --color-overlay: var(--overlay);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-lift: var(--shadow-lift);
+}
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* A compact product scale: 13px body, like most dense tools. */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 14px;
+  --text-base--line-height: 22px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-canvas text-fg font-sans text-sm;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  input,
+  textarea {
+    @apply placeholder:text-fg-faint;
+  }
+}
+
+@layer components {
+  /* Thin, unobtrusive scrollbars for the board and side panels. */
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+
+  .skeleton {
+    @apply rounded-md bg-subtle;
+    background-image: linear-gradient(90deg, transparent, var(--hover), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+
+  .prose-report {
+    @apply text-sm leading-6 text-fg;
+  }
+  .prose-report h3 {
+    @apply mt-5 mb-1.5 text-xs font-semibold uppercase tracking-wide text-fg-muted first:mt-0;
+  }
+  .prose-report p {
+    @apply my-2;
+  }
+  .prose-report ul {
+    @apply my-2 list-disc space-y-1 pl-5 marker:text-fg-faint;
+  }
+  .prose-report strong {
+    @apply font-semibold;
+  }
+  .prose-report code {
+    @apply rounded-sm bg-subtle px-1 font-mono text-xs;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
