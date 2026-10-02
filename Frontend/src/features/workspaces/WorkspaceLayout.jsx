@@ -3,6 +3,8 @@ import { Link, Outlet, useParams } from 'react-router';
 import { useHotkey } from '@/lib/hotkeys';
 import { EmptyState } from '@/components/States';
 import { CommandPalette } from '@/features/command/CommandPalette';
+import { useCurrentUser } from '@/features/auth/AuthProvider';
+import { DemoBanner } from '@/features/demo/DemoBanner';
 import { Sidebar } from './Sidebar';
 import { useWorkspace } from './api';
 import { closeMobileSidebar, useMobileSidebarOpen } from './sidebarStore';
@@ -12,6 +14,7 @@ export function WorkspaceLayout() {
   const workspace = useWorkspace(workspaceId);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const mobileSidebarOpen = useMobileSidebarOpen();
+  const me = useCurrentUser();
 
   useHotkey('mod+k', () => setPaletteOpen((open) => !open));
 
@@ -39,6 +42,7 @@ export function WorkspaceLayout() {
         onMobileClose={closeMobileSidebar}
       />
       <main className="relative flex min-w-0 flex-1 flex-col bg-surface">
+        {me.isDemo && <DemoBanner workspaceId={workspaceId} onOpenPalette={() => setPaletteOpen(true)} />}
         <Outlet />
       </main>
       <CommandPalette workspaceId={workspaceId} open={paletteOpen} onOpenChange={setPaletteOpen} />

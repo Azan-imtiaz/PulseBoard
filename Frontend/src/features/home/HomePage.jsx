@@ -149,6 +149,9 @@ function SiteHeader() {
               {s.label}
             </a>
           ))}
+          <Link to="/demo" className="text-sm text-fg-muted transition-colors hover:text-fg">
+            Live demo
+          </Link>
           <Link to="/guide" className="text-sm text-fg-muted transition-colors hover:text-fg">
             Guide
           </Link>
@@ -200,6 +203,13 @@ function SiteHeader() {
                   {s.label}
                 </a>
               ))}
+              <Link
+                to="/demo"
+                onClick={closeMobile}
+                className="rounded-md px-2 py-2 text-sm text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+              >
+                Live demo
+              </Link>
               <Link
                 to="/guide"
                 onClick={closeMobile}
@@ -257,15 +267,20 @@ function Hero() {
               </Link>
             ) : (
               <>
-                <Link to="/register" className={primaryButton}>
-                  Create your workspace <ArrowRight className="size-4" />
+                <Link to="/demo" className={primaryButton}>
+                  Try the live demo <ArrowRight className="size-4" />
                 </Link>
-                <Link to="/login" className={secondaryButton}>
-                  Sign in
+                <Link to="/register" className={secondaryButton}>
+                  Create your workspace
                 </Link>
               </>
             )}
           </div>
+          {status !== 'signed-in' && (
+            <p className="mt-4 text-sm text-fg-faint">
+              The demo needs no sign-up. Explore as an owner, an admin or a member.
+            </p>
+          )}
         </div>
 
         <div className="mt-16">
@@ -622,12 +637,12 @@ function FinalCta() {
             Open PulseBoard <ArrowRight className="size-4" />
           </Link>
         ) : (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Link to="/register" className={primaryButton}>
               Create your workspace
             </Link>
-            <Link to="/login" className={secondaryButton}>
-              Sign in
+            <Link to="/demo" className={secondaryButton}>
+              Try the live demo
             </Link>
           </div>
         )}

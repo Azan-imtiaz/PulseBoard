@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { ArrowRight, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Field, Input } from '@/components/Input';
 import { useAuth } from './AuthProvider';
@@ -76,12 +77,19 @@ export function LoginPage() {
           Sign in
         </Button>
       </form>
-      {import.meta.env.DEV && (
-        <div className="mt-6 rounded-lg border border-dashed border-line px-3 py-2.5 text-xs leading-5 text-fg-muted">
-          Seeded demo: <span className="font-mono text-fg">maya</span> /{' '}
-          <span className="font-mono text-fg">pulseboard</span>
-        </div>
-      )}
+      <Link
+        to="/demo"
+        className="group mt-6 flex items-center gap-3 rounded-lg border border-line px-3.5 py-3 transition-colors hover:border-line-strong hover:bg-subtle"
+      >
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent-soft text-accent">
+          <PlayCircle className="size-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-fg">Just looking around?</span>
+          <span className="block text-xs text-fg-muted">Try the live demo. No account needed.</span>
+        </span>
+        <ArrowRight className="size-4 text-fg-faint transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </AuthLayout>
   );
 }

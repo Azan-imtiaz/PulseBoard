@@ -12,6 +12,7 @@ import { GuidePage } from '@/features/guide/GuidePage';
 import { BoardPage } from '@/features/boards/BoardPage';
 import { EmptyState } from '@/components/States';
 import { HomePage } from '@/features/home/HomePage';
+import { DemoPage } from '@/features/demo/DemoPage';
 
 const router = createBrowserRouter([
   { path: '/', element: <HomePage /> },
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
   // Reachable whether signed in or signed out, not nested under RequireAuth or
   // a workspace, so it doesn't depend on either.
   { path: '/guide', element: <GuidePage /> },
+  { path: '/demo', element: <DemoPage /> },
   {
     element: <RequireAuth />,
     children: [

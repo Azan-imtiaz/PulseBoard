@@ -51,12 +51,22 @@ export function AuthProvider({ children }) {
         startSession(await api('/auth/verify-email', { method: 'POST', body: { email, code } })),
       resetPassword: async (email, code, password) =>
         startSession(await api('/auth/reset-password', { method: 'POST', body: { email, code, password } })),
+      // Signs in to the shared demo as 'owner', 'admin' or 'member', replacing any
+      // current session so switching roles doesn't leave old sessions behind.
+      enterDemo: async (role) => {
+        if (state.status === 'signed-in') await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
+        const session = await api('/demo/sign-in', { method: 'POST', body: { role } });
+        setAccessToken(null);
+        disconnectSocket();
+        queryClient.clear();
+        startSession(session);
+      },
       logout: async () => {
         await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
         endSession(true);
       },
     }),
-    [state, startSession, endSession],
+    [state, startSession, endSession, queryClient],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
