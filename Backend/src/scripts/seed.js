@@ -14,7 +14,15 @@ if (config.NODE_ENV === 'production') {
 }
 
 await connectDb();
-await mongoose.connection.dropDatabase();
+
+// Empty every collection rather than dropping the database: hosted databases like
+// MongoDB Atlas don't give ordinary users permission to drop one.
+const { host, name } = mongoose.connection;
+console.log(`Clearing ${name} on ${host}...`);
+for (const collection of await mongoose.connection.db.collections()) {
+  await collection.deleteMany({});
+}
+
 const { users } = await resetDemo();
 
 const taskCount = boards.reduce((sum, b) => sum + b.tasks.length, 0);
