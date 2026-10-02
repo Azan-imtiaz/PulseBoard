@@ -14,28 +14,28 @@ const STEP_MS = 1100;
 const LAST_STEP = 10;
 
 const people = {
-  maya: { name: 'Maya Chen', color: '#F76B15' },
-  priya: { name: 'Priya Raman', color: '#8E4EC6' },
-  daniel: { name: 'Daniel Okafor', color: '#0090FF' },
+  ayesha: { name: 'Ayesha Khan', color: '#F76B15' },
+  hira: { name: 'Hira Siddiqui', color: '#8E4EC6' },
+  bilal: { name: 'Bilal Ahmed', color: '#0090FF' },
 };
 
 const cards = {
   'PLAT-20': {
     title: 'Due-date reminders at 9am local time',
     priority: 'medium',
-    who: 'sofia',
+    who: 'fatima',
     label: 'notifications',
   },
-  'PLAT-17': { title: 'Cache board state for faster loads', priority: 'high', who: 'daniel', label: 'perf' },
+  'PLAT-17': { title: 'Cache board state for faster loads', priority: 'high', who: 'bilal', label: 'perf' },
   'PLAT-5': { title: 'Audit log export (CSV)', priority: 'low', label: 'api' },
-  'PLAT-3': { title: 'Webhook retries with exponential backoff', priority: 'high', who: 'priya', label: 'api' },
-  'PLAT-21': { title: 'Flaky test: socket fan-out', priority: 'medium', who: 'maya', label: 'bug' },
-  'PLAT-2': { title: 'Rotate refresh tokens on every use', priority: 'high', who: 'daniel', label: 'security' },
-  'PLAT-6': { title: 'Rate limit the public API', priority: 'high', who: 'priya', label: 'api' },
-  'PLAT-8': { title: 'Signed upload URLs for attachments', priority: 'medium', who: 'maya', label: 'api' },
+  'PLAT-3': { title: 'Webhook retries with exponential backoff', priority: 'high', who: 'hira', label: 'api' },
+  'PLAT-21': { title: 'Flaky test: socket fan-out', priority: 'medium', who: 'ayesha', label: 'bug' },
+  'PLAT-2': { title: 'Rotate refresh tokens on every use', priority: 'high', who: 'bilal', label: 'security' },
+  'PLAT-6': { title: 'Rate limit the public API', priority: 'high', who: 'hira', label: 'api' },
+  'PLAT-8': { title: 'Signed upload URLs for attachments', priority: 'medium', who: 'ayesha', label: 'api' },
 };
 
-const avatarFor = { ...people, sofia: { name: 'Sofia Alvarez', color: '#12A594' } };
+const avatarFor = { ...people, fatima: { name: 'Fatima Malik', color: '#12A594' } };
 
 function columnsAt(step) {
   const plat3Moved = step >= 3;
@@ -49,15 +49,15 @@ function columnsAt(step) {
 }
 
 const cursorPath = {
-  priya: [[900, 330], [420, 84], [420, 84], [690, 84], [690, 84], [720, 250], [760, 290]],
-  daniel: [[170, 320], [200, 230], [170, 250], [140, 84], [140, 84], [140, 84], [410, 84], [410, 84], [450, 230]],
+  hira: [[900, 330], [420, 84], [420, 84], [690, 84], [690, 84], [720, 250], [760, 290]],
+  bilal: [[170, 320], [200, 230], [170, 250], [140, 84], [140, 84], [140, 84], [410, 84], [410, 84], [450, 230]],
 };
 
 const at = (path, step) => path[Math.min(step, path.length - 1)];
 
 const activity = {
-  4: { who: 'priya', text: 'moved PLAT-3 to In Review' },
-  7: { who: 'daniel', text: 'started PLAT-20' },
+  4: { who: 'hira', text: 'moved PLAT-3 to In Review' },
+  7: { who: 'bilal', text: 'started PLAT-20' },
 };
 
 export function HeroBoard() {
@@ -101,7 +101,7 @@ export function HeroBoard() {
         style={{ width: WIDTH, height: HEIGHT, transform: `scale(${scale})` }}
       >
         <div className="flex h-11 items-center gap-2 border-b border-line bg-surface px-4 text-[13px]">
-          <span className="text-fg-muted">Northwind Labs</span>
+          <span className="text-fg-muted">Margalla Labs</span>
           <span className="text-fg-faint">/</span>
           <span className="font-medium">Platform</span>
           <div className="ml-auto flex items-center gap-2">
@@ -136,8 +136,8 @@ export function HeroBoard() {
             ))}
           </LayoutGroup>
 
-          <Cursor person={people.priya} position={at(cursorPath.priya, step)} />
-          <Cursor person={people.daniel} position={at(cursorPath.daniel, step)} />
+          <Cursor person={people.hira} position={at(cursorPath.hira, step)} />
+          <Cursor person={people.bilal} position={at(cursorPath.bilal, step)} />
 
           <AnimatePresence>
             {latest && (
