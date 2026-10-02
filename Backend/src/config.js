@@ -35,6 +35,10 @@ const schema = z.object({
   // Where the "Contact the team" form in the app sends its messages. Leave empty
   // to disable the form.
   CONTACT_EMAIL: optional,
+
+  // Rebuild the public demo workspace every N hours. Leave empty to reset it only
+  // by hand with `npm run demo:reset`.
+  DEMO_RESET_HOURS: z.coerce.number().positive().optional().or(z.literal('').transform(() => undefined)),
 });
 
 const parsed = schema.safeParse(process.env);
