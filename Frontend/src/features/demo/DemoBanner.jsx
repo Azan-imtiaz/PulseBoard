@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import * as Popover from '@radix-ui/react-popover';
 import { toast } from 'sonner';
-import { Check, ChevronDown, ListChecks, Repeat } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ListChecks, Repeat } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { Avatar } from '@/components/Avatar';
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuTrigger, popoverClass } from '@/components/Menu';
@@ -80,6 +80,14 @@ export function DemoBanner({ workspaceId, onOpenPalette }) {
 
   return (
     <div className="flex h-10 shrink-0 items-center gap-2 border-b border-accent/20 bg-accent-soft px-3 text-sm sm:px-5">
+      <Link
+        to="/"
+        className="-ml-1 flex h-7 items-center gap-1 rounded-md px-2 text-fg-muted outline-none hover:bg-surface/70 hover:text-fg focus-visible:bg-surface/70"
+      >
+        <ArrowLeft className="size-3.5" />
+        Home
+      </Link>
+      <span className="h-4 w-px bg-accent/25" />
       <span className="rounded-sm bg-accent px-1.5 py-0.5 text-2xs font-semibold tracking-wide text-accent-fg uppercase">
         Demo
       </span>

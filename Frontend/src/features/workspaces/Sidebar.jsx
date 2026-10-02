@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   BookOpen,
@@ -14,6 +14,7 @@ import {
   Sun,
   Users,
   FileCode2,
+  House,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -170,6 +171,7 @@ function UserMenu() {
   const user = useCurrentUser();
   const { logout } = useAuth();
   const theme = useTheme();
+  const navigate = useNavigate();
 
   return (
     <Menu>
@@ -198,6 +200,9 @@ function UserMenu() {
           System
         </MenuItem>
         <MenuSeparator />
+        <MenuItem icon={<House className="size-3.5" />} onSelect={() => navigate('/')}>
+          Home page
+        </MenuItem>
         <MenuItem icon={<FileCode2 className="size-3.5" />} onSelect={() => window.open('/docs', '_blank')}>
           API reference
         </MenuItem>
