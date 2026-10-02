@@ -17,6 +17,11 @@ const summaries = new Map();
 // Model calls are slow and cost money; keep one person from hammering them.
 aiRouter.use(rateLimit({ name: 'ai', limit: 20, windowMs: 60_000 }));
 
+// Demo accounts are shared by every visitor, so they also get a daily budget per
+// visitor to keep the bill predictable.
+const demoDaily = rateLimit({ name: 'ai-demo', limit: 40, windowMs: 86_400_000, key: (req) => req.ip ?? 'unknown' });
+aiRouter.use((req, res, next) => (req.isDemo ? demoDaily(req, res, next) : next()));
+
 aiRouter.post('/tasks/:taskId/summary', async (req, res) => {
   const { task } = await authorizeTask(req.userId, req.params.taskId, 'ai:use');
   const comments = await CommentModel.find({ task: task._id }).sort({ createdAt: 1 }).populate('author', 'name').lean();

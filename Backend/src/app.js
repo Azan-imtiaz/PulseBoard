@@ -19,6 +19,7 @@ import { commentRouter } from './features/comments/comment.routes.js';
 import { attachmentRouter } from './features/attachments/attachment.routes.js';
 import { aiRouter } from './features/ai/ai.routes.js';
 import { contactRouter } from './features/contact/contact.routes.js';
+import { demoRouter } from './features/demo/demo.routes.js';
 
 const openapi = YAML.parse(readFileSync(new URL('../openapi.yaml', import.meta.url), 'utf8'));
 
@@ -41,6 +42,7 @@ export function createApp() {
 
   const api = Router();
   api.use('/auth', authRouter);
+  api.use('/demo', demoRouter);
   api.use(contactRouter); // public, reachable whether signed in or not
 
   const authed = Router();

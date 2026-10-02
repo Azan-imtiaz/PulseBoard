@@ -8,6 +8,7 @@ import { deleteBoards } from '../boards/board.service.js';
 import { WorkspaceModel } from './workspace.model.js';
 import { authorize } from './access.js';
 import { canChangeRole, canRemoveMember } from './permissions.js';
+import { blockInDemo } from '../demo/guard.js';
 
 export const workspaceRouter = Router();
 
@@ -27,20 +28,20 @@ workspaceRouter.get('/', async (req, res) => {
   });
 });
 
-workspaceRouter.post('/', async (req, res) => {
+workspaceRouter.post('/', blockInDemo, async (req, res) => {
   const { name } = nameSchema.parse(req.body);
   const workspace = await WorkspaceModel.create({ name, members: [{ user: req.userId, role: 'owner' }] });
   res.status(201).json({ workspace: { id: String(workspace._id), name, role: 'owner', memberCount: 1 } });
 });
 
-workspaceRouter.patch('/:workspaceId', async (req, res) => {
+workspaceRouter.patch('/:workspaceId', blockInDemo, async (req, res) => {
   const role = await authorize(req.userId, req.params.workspaceId, 'workspace:update');
   const { name } = nameSchema.parse(req.body);
   const workspace = await WorkspaceModel.findByIdAndUpdate(req.params.workspaceId, { name }, { new: true });
   res.json({ workspace: { id: String(workspace._id), name: workspace.name, role } });
 });
 
-workspaceRouter.delete('/:workspaceId', async (req, res) => {
+workspaceRouter.delete('/:workspaceId', blockInDemo, async (req, res) => {
   const { workspaceId } = req.params;
   await authorize(req.userId, workspaceId, 'workspace:delete');
 
@@ -63,7 +64,7 @@ workspaceRouter.get('/:workspaceId/members', async (req, res) => {
   });
 });
 
-workspaceRouter.post('/:workspaceId/members', async (req, res) => {
+workspaceRouter.post('/:workspaceId/members', blockInDemo, async (req, res) => {
   const { workspaceId } = req.params;
   const actorRole = await authorize(req.userId, workspaceId, 'members:manage');
   const input = addMemberSchema.parse(req.body);
@@ -89,7 +90,7 @@ async function findMember(workspaceId, userId) {
   return { workspace, member };
 }
 
-workspaceRouter.patch('/:workspaceId/members/:userId', async (req, res) => {
+workspaceRouter.patch('/:workspaceId/members/:userId', blockInDemo, async (req, res) => {
   const { workspaceId, userId } = req.params;
   const actorRole = await authorize(req.userId, workspaceId, 'members:manage');
   const { role } = changeRoleSchema.parse(req.body);
@@ -102,7 +103,7 @@ workspaceRouter.patch('/:workspaceId/members/:userId', async (req, res) => {
   res.json({ userId, role });
 });
 
-workspaceRouter.delete('/:workspaceId/members/:userId', async (req, res) => {
+workspaceRouter.delete('/:workspaceId/members/:userId', blockInDemo, async (req, res) => {
   const { workspaceId, userId } = req.params;
   const actorRole = await authorize(req.userId, workspaceId, 'workspace:read');
   const { workspace, member } = await findMember(workspaceId, userId);

@@ -8,6 +8,7 @@ import { canDeleteTask } from '../workspaces/permissions.js';
 import { authorizeTask } from './access.js';
 import { PRIORITIES } from './task.model.js';
 import { STATUSES } from './workflow.js';
+import { demoLocked } from '../demo/guard.js';
 import { createTask, deleteTask, moveTask, updateTask } from './task.service.js';
 
 export const taskRouter = Router();
@@ -71,6 +72,9 @@ taskRouter.delete('/tasks/:taskId', async (req, res) => {
   if (!canDeleteTask(role, req.userId, task)) {
     throw forbidden('Only admins or the person who created this task can delete it');
   }
-  await deleteTask(req.userId, task, await loadBoard(task.board));
+  const board = await loadBoard(task.board);
+  // In the demo, visitors can delete tasks they added but not the seeded ones.
+  if (req.isDemo && task.createdAt < board.createdAt) throw demoLocked();
+  await deleteTask(req.userId, task, board);
   res.status(204).end();
 });

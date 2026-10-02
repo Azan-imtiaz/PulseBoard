@@ -7,6 +7,7 @@ import { emitToBoard } from '../../realtime/emit.js';
 import { BoardModel } from '../boards/board.model.js';
 import { toTaskDto } from '../boards/board.service.js';
 import { authorizeTask } from '../tasks/access.js';
+import { blockInDemo } from '../demo/guard.js';
 
 export const attachmentRouter = Router();
 
@@ -33,7 +34,7 @@ async function publishTask(task) {
 }
 
 // Step 1: the client asks for a short-lived URL and PUTs the file straight to S3.
-attachmentRouter.post('/tasks/:taskId/attachments/upload-url', async (req, res) => {
+attachmentRouter.post('/tasks/:taskId/attachments/upload-url', blockInDemo, async (req, res) => {
   const { task } = await authorizeTask(req.userId, req.params.taskId, 'task:write');
   const input = uploadSchema.parse(req.body);
 
@@ -46,7 +47,7 @@ attachmentRouter.post('/tasks/:taskId/attachments/upload-url', async (req, res) 
 
 // Step 2: once the upload finishes, the client confirms it and we record it on the task.
 // We read size and type back from S3 rather than trusting the client.
-attachmentRouter.post('/tasks/:taskId/attachments', async (req, res) => {
+attachmentRouter.post('/tasks/:taskId/attachments', blockInDemo, async (req, res) => {
   const { task } = await authorizeTask(req.userId, req.params.taskId, 'task:write');
   const input = confirmSchema.parse(req.body);
 
@@ -69,7 +70,7 @@ attachmentRouter.get('/tasks/:taskId/attachments/:attachmentId/url', async (req,
   res.json({ url: await presignDownload(attachment.key, attachment.name) });
 });
 
-attachmentRouter.delete('/tasks/:taskId/attachments/:attachmentId', async (req, res) => {
+attachmentRouter.delete('/tasks/:taskId/attachments/:attachmentId', blockInDemo, async (req, res) => {
   const { task } = await authorizeTask(req.userId, req.params.taskId, 'task:write');
   const attachment = task.attachments.id(req.params.attachmentId);
   if (!attachment) throw notFound('Attachment');

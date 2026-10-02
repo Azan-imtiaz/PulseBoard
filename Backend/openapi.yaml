@@ -31,6 +31,7 @@ tags:
   - name: Attachments
   - name: AI
   - name: Contact
+  - name: Demo
 security:
   - bearer: []
 
@@ -219,6 +220,35 @@ paths:
                 properties:
                   user: { $ref: '#/components/schemas/User' }
 
+  /demo:
+    get:
+      tags: [Demo]
+      summary: List the demo accounts visitors can sign in as
+      description: Public. `available` is false until the demo has been seeded with `npm run demo:reset`.
+      security: []
+      responses:
+        '200': { description: OK }
+  /demo/sign-in:
+    post:
+      tags: [Demo]
+      summary: Sign in to the shared demo workspace as owner, admin or member
+      description: >
+        Public. Starts a normal session for the demo account with that role. Demo accounts can work on
+        tasks and comments, but can't delete or rename workspaces and boards, change members, upload files
+        or delete the seeded tasks; those requests return 403 with code `demo_locked`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { type: string, enum: [owner, admin, member] }
+      responses:
+        '200': { description: Signed in }
+        '404': { $ref: '#/components/responses/Error' }
   /workspaces:
     get:
       tags: [Workspaces]

@@ -6,6 +6,7 @@ import { BoardModel } from './board.model.js';
 import { authorizeBoard } from './access.js';
 import { deleteBoards, getBoardState, toBoardSummary } from './board.service.js';
 import { emitToBoard } from '../../realtime/emit.js';
+import { blockInDemo } from '../demo/guard.js';
 
 export const boardRouter = Router();
 
@@ -27,7 +28,7 @@ boardRouter.get('/workspaces/:workspaceId/boards', async (req, res) => {
   res.json({ boards: boards.map(toBoardSummary) });
 });
 
-boardRouter.post('/workspaces/:workspaceId/boards', async (req, res) => {
+boardRouter.post('/workspaces/:workspaceId/boards', blockInDemo, async (req, res) => {
   const { workspaceId } = req.params;
   await authorize(req.userId, workspaceId, 'board:create');
   const input = createBoardSchema.parse(req.body);
@@ -46,7 +47,7 @@ boardRouter.get('/boards/:boardId', async (req, res) => {
   res.json({ ...state, role });
 });
 
-boardRouter.patch('/boards/:boardId', async (req, res) => {
+boardRouter.patch('/boards/:boardId', blockInDemo, async (req, res) => {
   const { board } = await authorizeBoard(req.userId, req.params.boardId, 'board:update');
   const input = updateBoardSchema.parse(req.body);
 
@@ -58,7 +59,7 @@ boardRouter.patch('/boards/:boardId', async (req, res) => {
   res.json({ board: summary });
 });
 
-boardRouter.delete('/boards/:boardId', async (req, res) => {
+boardRouter.delete('/boards/:boardId', blockInDemo, async (req, res) => {
   const { board } = await authorizeBoard(req.userId, req.params.boardId, 'board:delete');
   await deleteBoards([board._id]);
   res.status(204).end();

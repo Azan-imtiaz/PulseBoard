@@ -26,10 +26,11 @@ function deliver(to, subject, heading, body, url) {
   );
 }
 
+// Demo accounts have made-up addresses, so nothing is ever sent to them.
 export async function notifyAssigned(task, board, actorId) {
   if (String(task.assignee) === actorId) return;
   const [assignee, actor] = await Promise.all([UserModel.findById(task.assignee), UserModel.findById(actorId)]);
-  if (!assignee) return;
+  if (!assignee || assignee.isDemo) return;
 
   const key = `${board.key}-${task.number}`;
   deliver(
@@ -45,7 +46,10 @@ export async function notifyMentioned(task, board, actorId, userIds, body) {
   const recipients = userIds.filter((id) => id !== actorId);
   if (!recipients.length) return;
 
-  const [users, actor] = await Promise.all([UserModel.find({ _id: { $in: recipients } }), UserModel.findById(actorId)]);
+  const [users, actor] = await Promise.all([
+    UserModel.find({ _id: { $in: recipients }, isDemo: { $ne: true } }),
+    UserModel.findById(actorId),
+  ]);
   const key = `${board.key}-${task.number}`;
   const excerpt = body.length > 280 ? `${body.slice(0, 277)}…` : body;
 
@@ -62,7 +66,7 @@ export async function notifyMentioned(task, board, actorId, userIds, body) {
 
 export async function notifyDueSoon(task, board) {
   const assignee = await UserModel.findById(task.assignee);
-  if (!assignee || !task.dueDate) return;
+  if (!assignee || assignee.isDemo || !task.dueDate) return;
 
   const key = `${board.key}-${task.number}`;
   const due = task.dueDate.toLocaleString('en-US', {
