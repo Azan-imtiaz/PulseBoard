@@ -40,7 +40,7 @@ import { StatusIcon, PriorityIcon } from '@/features/tasks/meta';
 // Every example in this guide follows the same two people, at the same
 // fictional company, so the scenarios build on each other instead of
 // introducing a new cast every section.
-const HAMZA = { name: 'Hamza', color: 'var(--accent)' };
+const AZAN = { name: 'Azan', color: 'var(--accent)' };
 const SHIZA = { name: 'Shiza', color: '#c2750a' };
 
 const SECTIONS = [
@@ -211,7 +211,7 @@ function Section({ id, eyebrow, title, children }) {
   );
 }
 
-function Example({ person = HAMZA, children }) {
+function Example({ person = AZAN, children }) {
   return (
     <div className="flex gap-3 rounded-lg border border-line bg-subtle/60 p-4">
       <Avatar person={person} size={26} className="mt-0.5" />
@@ -253,8 +253,8 @@ function Hero() {
       </motion.div>
       <p className="mt-6 max-w-xl text-sm text-fg-faint">
         Every example below follows the same two people at a made-up company, so nothing here is about a real
-        client of yours &mdash; it's just <Avatar person={HAMZA} size={16} className="inline-block align-[-3px]" />{' '}
-        <b className="text-fg-muted">Hamza</b>, who runs a small design studio, and{' '}
+        client of yours &mdash; it's just <Avatar person={AZAN} size={16} className="inline-block align-[-3px]" />{' '}
+        <b className="text-fg-muted">Azan</b>, who runs a small design studio, and{' '}
         <Avatar person={SHIZA} size={16} className="inline-block align-[-3px]" /> <b className="text-fg-muted">Shiza</b>,
         who works with them.
       </p>
@@ -301,13 +301,13 @@ function Shape() {
       </div>
 
       <Example>
-        Hamza's company, Northlight Studio, is one <b>Workspace</b>. Inside it there are two <b>Boards</b>: "Client
+        Azan's company, Northlight Studio, is one <b>Workspace</b>. Inside it there are two <b>Boards</b>: "Client
         Projects" (one card per client job) and "Studio Ops" (internal chores, like renewing software licenses).
         Every card on those boards &mdash; "Redesign homepage for Bloom &amp; Co," say &mdash; is a <b>Task</b>.
       </Example>
 
       <p>
-        Everyone Hamza adds to the workspace can see <b>every</b> board inside it &mdash; there's no way to hide the
+        Everyone Azan adds to the workspace can see <b>every</b> board inside it &mdash; there's no way to hide the
         "Client Projects" board from one person while showing it to another. If two teams genuinely shouldn't see
         each other's work, they'd need two separate workspaces, not two boards in the same one.
       </p>
@@ -336,7 +336,7 @@ function WorkspaceRoles() {
     <Section id="workspace" eyebrow="Who can do what" title="Workspaces, members & the three roles">
       <Term name="Workspace">
         The top-level container &mdash; think "the whole studio's account." The moment someone confirms their
-        email for the first time, PulseBoard quietly creates a personal workspace for them. Hamza renamed his to
+        email for the first time, PulseBoard quietly creates a personal workspace for them. Azan renamed his to
         "Northlight Studio" and started adding people to it.
       </Term>
 
@@ -347,7 +347,7 @@ function WorkspaceRoles() {
       </Term>
 
       <Example person={SHIZA}>
-        Hamza tries to add Shiza to Northlight Studio using her email. Because Shiza already signed up and
+        Azan tries to add Shiza to Northlight Studio using her email. Because Shiza already signed up and
         confirmed her email last week, she's added instantly and can see the workspace the next time she refreshes.
       </Example>
 
@@ -359,13 +359,13 @@ function WorkspaceRoles() {
             role: 'owner',
             title: 'Whoever started the workspace',
             desc: 'Can do anything, including permanently deleting the whole workspace. There is currently no way to hand this role to someone else.',
-            example: 'Hamza created Northlight Studio, so he is its Owner.',
+            example: 'Azan created Northlight Studio, so he is its Owner.',
           },
           {
             role: 'admin',
             title: 'Runs boards and people below them',
             desc: 'Can create boards, add or remove members ranked below them, and delete any task on a board — not just their own.',
-            example: 'Hamza makes Shiza an Admin once she starts managing the studio’s client roster herself.',
+            example: 'Azan makes Shiza an Admin once she starts managing the studio’s client roster herself.',
           },
           {
             role: 'member',
@@ -432,7 +432,7 @@ function Boards() {
         task's id.
       </p>
       <Example>
-        Hamza creates a board called "Client Projects" and gives it the key <b>CLNT</b>. Every task on it gets an
+        Azan creates a board called "Client Projects" and gives it the key <b>CLNT</b>. Every task on it gets an
         id like <b>CLNT-1</b>, <b>CLNT-2</b>, <b>CLNT-14</b> &mdash; so when Shiza says "did you see CLNT-14?" in
         Slack, everyone knows exactly which card she means.
       </Example>
@@ -450,12 +450,12 @@ const STATUSES = [
   {
     id: 'backlog',
     what: "Noted down, but nobody's touched it yet. Every new task starts here.",
-    example: 'Hamza jots down "Redesign the studio’s own portfolio site" in March, knowing it won’t start for months. It sits in Backlog as a placeholder.',
+    example: 'Azan jots down "Redesign the studio’s own portfolio site" in March, knowing it won’t start for months. It sits in Backlog as a placeholder.',
   },
   {
     id: 'todo',
     what: "Scheduled next, but work hasn't started. The deliberate “up next” pile.",
-    example: 'Once Bloom & Co signs off on the brief, Hamza drags "Redesign homepage — Bloom & Co" from Backlog into Todo.',
+    example: 'Once Bloom & Co signs off on the brief, Azan drags "Redesign homepage — Bloom & Co" from Backlog into Todo.',
   },
   {
     id: 'in_progress',
@@ -470,12 +470,12 @@ const STATUSES = [
   {
     id: 'in_review',
     what: "Finished, but waiting on someone else's check before it's truly done.",
-    example: 'Shiza wraps up the homepage and moves it to In Review so Hamza can sign off before it goes live.',
+    example: 'Shiza wraps up the homepage and moves it to In Review so Azan can sign off before it goes live.',
   },
   {
     id: 'done',
     what: 'Fully complete. Nothing left to do.',
-    example: 'Hamza reviews it, approves it, and moves the card to Done. PulseBoard quietly records the completion date.',
+    example: 'Azan reviews it, approves it, and moves the card to Done. PulseBoard quietly records the completion date.',
   },
 ];
 
@@ -534,7 +534,7 @@ function Tasks() {
         </li>
       </ul>
       <Example>
-        Hamza tries to drag "Logo refresh — Cedar Robotics" straight into In Progress, but nobody's assigned to it
+        Azan tries to drag "Logo refresh — Cedar Robotics" straight into In Progress, but nobody's assigned to it
         yet. PulseBoard stops him: "Assign someone before starting this task." He picks Shiza as the assignee
         first, and the move goes through.
       </Example>
@@ -594,7 +594,7 @@ function Together() {
       </Term>
       <Example person={SHIZA}>
         On the Bloom &amp; Co homepage task, Shiza writes: "@azan can you confirm the final brand colors before I
-        move on?" Hamza gets an email because he was mentioned, and replies right there in the thread &mdash; the
+        move on?" Azan gets an email because he was mentioned, and replies right there in the thread &mdash; the
         whole exchange stays attached to that task forever.
       </Example>
 
@@ -603,7 +603,7 @@ function Together() {
         later can see them, with no digging through email required.
       </Term>
       <Example>
-        Hamza drags the client's signed contract PDF onto the "Redesign homepage — Bloom &amp; Co" task. Now
+        Azan drags the client's signed contract PDF onto the "Redesign homepage — Bloom &amp; Co" task. Now
         anyone on the team can confirm the paperwork is in without asking him directly.
       </Example>
     </Section>
@@ -641,7 +641,7 @@ function Notifications() {
         <li><b>A task you own is due within 24 hours and isn't finished</b> &mdash; a one-time reminder, checked every 15 minutes.</li>
       </ul>
       <Example>
-        Hamza assigns "File extension for Cedar Robotics" to Shiza with tomorrow's due date. She gets an "assigned
+        Azan assigns "File extension for Cedar Robotics" to Shiza with tomorrow's due date. She gets an "assigned
         to you" email right away, and &mdash; if it's still open by morning &mdash; one "due soon" reminder,
         never more than once.
       </Example>
@@ -652,8 +652,8 @@ function Notifications() {
         they happen, and you can even watch their mouse cursor moving around the board with their name attached.
       </p>
       <Example person={SHIZA}>
-        Hamza and Shiza both have "Client Projects" open at once. The instant Shiza drags a card from In Progress
-        to In Review, it moves on Hamza's screen too &mdash; no refresh, no delay.
+        Azan and Shiza both have "Client Projects" open at once. The instant Shiza drags a card from In Progress
+        to In Review, it moves on Azan's screen too &mdash; no refresh, no delay.
       </Example>
     </Section>
   );
@@ -668,7 +668,7 @@ function CommandPaletteSection() {
         "Generate sprint report," or jump straight to Members, without your hands ever leaving the keyboard.
       </p>
       <Example>
-        Hamza can't remember which board the Cedar Robotics task lives on. He hits <Kbd>{modKey}</Kbd> <Kbd>K</Kbd>,
+        Azan can't remember which board the Cedar Robotics task lives on. He hits <Kbd>{modKey}</Kbd> <Kbd>K</Kbd>,
         types "cedar," and the matching card appears instantly &mdash; one click and he's there.
       </Example>
     </Section>
@@ -680,17 +680,17 @@ function Ai() {
     {
       title: 'Summarize a comment thread',
       desc: "Once a task has 3+ comments, a “Summarize” button appears. It reads the whole back-and-forth and hands back a short recap — what was discussed, what was decided, what's still open.",
-      example: 'The Bloom & Co task has 14 comments about a color change. Instead of reading all of them, Hamza clicks "Summarize 14 comments" and gets five bullet points in seconds.',
+      example: 'The Bloom & Co task has 14 comments about a color change. Instead of reading all of them, Azan clicks "Summarize 14 comments" and gets five bullet points in seconds.',
     },
     {
       title: 'Sprint report',
       desc: 'A status report you’d otherwise write by hand: how many tasks shipped, how many are blocked, and a written paragraph explaining it — over the last 7, 14, or 28 days. The counts are always real numbers from your board; only the sentences around them are AI-written.',
-      example: 'Every Friday, Hamza opens "Client Projects" and generates a report. It reads: "The team shipped 4 projects this week. The Cedar Robotics logo remains blocked on client feedback." He forwards it to his co-founder instead of typing a summary himself.',
+      example: 'Every Friday, Azan opens "Client Projects" and generates a report. It reads: "The team shipped 4 projects this week. The Cedar Robotics logo remains blocked on client feedback." He forwards it to his co-founder instead of typing a summary himself.',
     },
     {
       title: 'Suggested priorities',
       desc: "Looks at due dates, what each task is blocking, and how long it's been idle, then suggests priority changes with a one-line reason. Nothing changes until you tick “Apply.”",
-      example: 'Hamza clicks "Prioritize." The AI suggests bumping "Website launch — Bloom & Co" to Urgent ("due in 2 days, blocking 1 other task") and leaves everything else alone. He applies just that one change.',
+      example: 'Azan clicks "Prioritize." The AI suggests bumping "Website launch — Bloom & Co" to Urgent ("due in 2 days, blocking 1 other task") and leaves everything else alone. He applies just that one change.',
     },
   ];
   return (
