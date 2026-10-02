@@ -12,6 +12,8 @@ const userSchema = new Schema(
     passwordHash: { type: String, required: true, select: false },
     // Stable per-user hue for avatars and live cursors.
     color: { type: String, required: true },
+    // Optional profile photo; avatars fall back to initials on `color`.
+    avatarUrl: { type: String, default: null },
     // Shared accounts for the public demo. They never receive email and can't
     // make changes that would spoil the demo for the next visitor.
     isDemo: { type: Boolean, default: false },
@@ -28,6 +30,7 @@ export function publicUser(user) {
     username: user.username,
     email: user.email,
     color: user.color,
+    avatarUrl: user.avatarUrl ?? null,
     isDemo: Boolean(user.isDemo),
   };
 }

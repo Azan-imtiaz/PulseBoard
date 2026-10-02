@@ -25,7 +25,7 @@ demoRouter.get('/', limiter, async (_req, res) => {
       .filter((p) => users.has(p.username))
       .map((p) => {
         const user = users.get(p.username);
-        return { ...p, name: user.name, color: user.color };
+        return { ...p, name: user.name, color: user.color, avatarUrl: user.avatarUrl ?? null };
       }),
   });
 });

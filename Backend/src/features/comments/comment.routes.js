@@ -26,6 +26,7 @@ function toCommentDto(comment) {
       name: comment.author.name,
       username: comment.author.username,
       color: comment.author.color,
+      avatarUrl: comment.author.avatarUrl ?? null,
     },
   };
 }
@@ -34,7 +35,7 @@ commentRouter.get('/tasks/:taskId/comments', async (req, res) => {
   await authorizeTask(req.userId, req.params.taskId, 'workspace:read');
   const comments = await CommentModel.find({ task: req.params.taskId })
     .sort({ createdAt: 1 })
-    .populate('author', 'name username color')
+    .populate('author', 'name username color avatarUrl')
     .lean();
   res.json({ comments: comments.map((c) => toCommentDto(c)) });
 });
@@ -57,7 +58,7 @@ commentRouter.post('/tasks/:taskId/comments', async (req, res) => {
     body: input.body,
     mentions,
   });
-  await comment.populate('author', 'name username color');
+  await comment.populate('author', 'name username color avatarUrl');
   await recordActivity({ board: task.board, task: task._id, actor: req.userId, type: 'comment.added' });
 
   const board = await BoardModel.findById(task.board).lean();

@@ -21,7 +21,7 @@ export function createSocketServer(httpServer) {
     const user = await UserModel.findById(userId).lean();
     if (!user) return next(new Error('unauthorized'));
 
-    socket.data.user = { id: userId, name: user.name, color: user.color };
+    socket.data.user = { id: userId, name: user.name, color: user.color, avatarUrl: user.avatarUrl ?? null };
     socket.data.boardId = null;
     next();
   });

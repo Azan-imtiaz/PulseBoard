@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { cn } from '@/lib/cn';
 
@@ -9,7 +10,23 @@ const initials = (name) =>
     .join('')
     .toUpperCase();
 
+// A profile photo when the person has one, otherwise initials on their colour.
 export function Avatar({ person, size = 20, className }) {
+  const [failed, setFailed] = useState(false);
+
+  if (person.avatarUrl && !failed) {
+    return (
+      <img
+        src={person.avatarUrl}
+        alt={person.name}
+        title={person.name}
+        onError={() => setFailed(true)}
+        className={cn('inline-block shrink-0 rounded-full object-cover select-none', className)}
+        style={{ width: size, height: size, backgroundColor: person.color }}
+      />
+    );
+  }
+
   return (
     <span
       title={person.name}
