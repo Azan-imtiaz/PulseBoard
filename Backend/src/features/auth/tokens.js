@@ -10,20 +10,27 @@ import { RefreshTokenModel } from './refreshToken.model.js';
 // retryable error instead of killing the session.
 const ROTATION_GRACE_MS = 10_000;
 
-export function signAccessToken(userId) {
-  return jwt.sign({}, config.JWT_ACCESS_SECRET, {
+// Demo accounts carry a `demo` claim so request guards can check it without a
+// database lookup.
+export function signAccessToken(userId, { demo = false } = {}) {
+  return jwt.sign(demo ? { demo: true } : {}, config.JWT_ACCESS_SECRET, {
     subject: userId,
     expiresIn: config.ACCESS_TOKEN_TTL,
   });
 }
 
-export function verifyAccessToken(token) {
+export function readAccessToken(token) {
   try {
     const payload = jwt.verify(token, config.JWT_ACCESS_SECRET);
-    return typeof payload === 'object' && payload.sub ? payload.sub : null;
+    if (typeof payload !== 'object' || !payload.sub) return null;
+    return { userId: payload.sub, demo: payload.demo === true };
   } catch {
     return null;
   }
+}
+
+export function verifyAccessToken(token) {
+  return readAccessToken(token)?.userId ?? null;
 }
 
 const hash = (token) => createHash('sha256').update(token).digest('hex');

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { config, isProd } from '../../config.js';
+import { config } from '../../config.js';
 import { HttpError } from '../../lib/errors.js';
 import { logger } from '../../lib/logger.js';
 import { requireAuth } from '../../middleware/auth.js';
@@ -9,7 +9,8 @@ import { rateLimit } from '../../middleware/rateLimit.js';
 import { WorkspaceModel } from '../workspaces/workspace.model.js';
 import { RefreshTokenModel } from './refreshToken.model.js';
 import { UserModel, publicUser } from './user.model.js';
-import { issueRefreshToken, revokeFamilyOf, rotateRefreshToken, signAccessToken } from './tokens.js';
+import { revokeFamilyOf, rotateRefreshToken } from './tokens.js';
+import { REFRESH_COOKIE, accessTokenFor, clearRefreshCookie, setRefreshCookie, startSession } from './session.js';
 import { colorFor } from './colors.js';
 import { consumeOtp, issueOtp } from './otp.js';
 import { sendPasswordResetCode, sendVerificationCode } from './emails.js';
@@ -17,8 +18,6 @@ import { passwordProblem } from './passwords.js';
 import { checkUsernameFormat, isUsernameTaken, suggestUsernames } from './usernames.js';
 
 export const authRouter = Router();
-
-const REFRESH_COOKIE = 'pb_refresh';
 
 // Keyed by IP: these routes run before we know who the caller is. Sign-in, sign-up
 // and codes share a strict budget; refresh and the username check get their own,
@@ -35,22 +34,6 @@ const code = z.string().trim();
 
 const registerSchema = z.object({ name: z.string().trim().min(1).max(80), username, email, password });
 const loginSchema = z.object({ identifier: z.string().trim().toLowerCase().min(1).max(200), password });
-
-function setRefreshCookie(res, token) {
-  res.cookie(REFRESH_COOKIE, token, {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'strict',
-    path: '/api/v1/auth',
-    maxAge: config.REFRESH_TOKEN_TTL_DAYS * 86_400_000,
-  });
-}
-
-async function startSession(res, user) {
-  const userId = String(user._id);
-  setRefreshCookie(res, await issueRefreshToken(userId));
-  return { accessToken: signAccessToken(userId), user: publicUser(user) };
-}
 
 function assertPasswordOk(value, user) {
   const problem = passwordProblem(value, user);
@@ -173,7 +156,8 @@ authRouter.post('/login', authLimiter, async (req, res) => {
 authRouter.post('/forgot-password', authLimiter, async (req, res) => {
   const input = z.object({ email }).parse(req.body);
   const user = await UserModel.findOne({ email: input.email });
-  if (user) {
+  // Demo accounts use made-up addresses, so there's no inbox to send a code to.
+  if (user && !user.isDemo) {
     try {
       await sendPasswordResetCode(user, await issueOtp('reset', String(user._id)));
     } catch (err) {
@@ -221,13 +205,13 @@ authRouter.post('/refresh', refreshLimiter, async (req, res) => {
   if (!user) throw new HttpError(401, 'No active session', 'session_expired');
 
   setRefreshCookie(res, rotated.token);
-  res.json({ accessToken: signAccessToken(rotated.userId), user: publicUser(user) });
+  res.json({ accessToken: accessTokenFor(user), user: publicUser(user) });
 });
 
 authRouter.post('/logout', async (req, res) => {
   const token = req.cookies?.[REFRESH_COOKIE];
   if (token) await revokeFamilyOf(token);
-  res.clearCookie(REFRESH_COOKIE, { path: '/api/v1/auth' });
+  clearRefreshCookie(res);
   res.status(204).end();
 });
 

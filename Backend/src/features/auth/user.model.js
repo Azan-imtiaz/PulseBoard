@@ -12,6 +12,9 @@ const userSchema = new Schema(
     passwordHash: { type: String, required: true, select: false },
     // Stable per-user hue for avatars and live cursors.
     color: { type: String, required: true },
+    // Shared accounts for the public demo. They never receive email and can't
+    // make changes that would spoil the demo for the next visitor.
+    isDemo: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
@@ -19,5 +22,12 @@ const userSchema = new Schema(
 export const UserModel = model('User', userSchema);
 
 export function publicUser(user) {
-  return { id: String(user._id), name: user.name, username: user.username, email: user.email, color: user.color };
+  return {
+    id: String(user._id),
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    color: user.color,
+    isDemo: Boolean(user.isDemo),
+  };
 }
