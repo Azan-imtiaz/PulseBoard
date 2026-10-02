@@ -16,6 +16,7 @@ summarizes discussion threads, writes sprint reports and suggests priority chang
 ## Contents
 
 - [Overview](#overview)
+- [Live demo](#live-demo)
 - [Screenshots](#screenshots)
 - [Highlights](#highlights)
 - [Tech stack](#tech-stack)
@@ -37,6 +38,34 @@ on the server, not just hidden in the UI.
 Frontend/   React 19 + Vite + Tailwind CSS 4, Radix UI primitives, TanStack Query
 Backend/    Node.js + Express 5, MongoDB (Mongoose), Socket.IO, Zod validation
 ```
+
+## Live demo
+
+The app ships with a guided demo that needs no sign-up. Visitors pick a role on `/demo`
+and land in **Margalla Labs**, a six-person product team in Islamabad with three boards
+(Platform, Mobile App, Payments), a few weeks of history and working AI features.
+
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/screenshots/demo-page.png" alt="Demo page with owner, admin and member roles" /></td>
+    <td width="50%"><img src="./docs/screenshots/demo-checklist.png" alt="In-app demo banner with the guided checklist" /></td>
+  </tr>
+  <tr>
+    <td><b>Pick a role.</b> Owner, admin or member, each with what they can and can't do.</td>
+    <td><b>Guided tour.</b> A banner shows who you are, switches roles in one click and walks through seven things to try.</td>
+  </tr>
+</table>
+
+Demo mode is built so a public demo stays usable for the next visitor:
+
+- **Shared accounts, real permissions.** Demo users are normal accounts with a demo flag
+  carried in their access token. Role checks work exactly as they do for real users.
+- **Destructive actions are locked server-side.** Deleting or renaming workspaces and
+  boards, changing members, uploading files and deleting the seeded tasks return
+  `403 demo_locked`. Tasks and comments a visitor adds can still be edited and deleted.
+- **No email to demo accounts**, and a daily per-visitor cap on AI requests.
+- **Resetting is safe on a live server.** `npm run demo:reset` rebuilds only the demo
+  workspace and leaves real users alone. Set `DEMO_RESET_HOURS` to reset it on a timer.
 
 ## Screenshots
 
@@ -98,6 +127,8 @@ Backend/    Node.js + Express 5, MongoDB (Mongoose), Socket.IO, Zod validation
   notifications, mentions and due-date reminders.
 - **Documented REST API** (OpenAPI 3.1, served at `/docs`) alongside a Socket.IO event
   contract.
+- **Public demo mode** with one-click sign-in per role, a guided checklist and
+  server-side protection against visitors breaking it (see [Live demo](#live-demo)).
 - **Keyboard-first UX**: a command palette (`⌘K` / `Ctrl+K`), single-key shortcuts and
   full dark mode.
 
@@ -151,7 +182,8 @@ Backend/src/
   realtime/         Socket.IO server, rooms and presence
   services/         email, S3 storage, AI provider
   middleware/       auth, rate limiting
-  scripts/seed.js   demo workspace with a few weeks of history
+  features/demo/    demo accounts, sign-in, guards and seed data
+  scripts/          seed (local reset) and demo:reset (safe in production)
 
 Frontend/src/
   features/         one folder per area of the app (boards, tasks, ai, auth, ...)
@@ -169,7 +201,7 @@ string).
 cd Backend
 cp .env.example .env      # configure MONGO_URL and JWT_ACCESS_SECRET at minimum
 npm install
-npm run seed              # optional: seeds a demo workspace with sample data
+npm run seed              # optional: wipes the local DB and loads the demo workspace
 npm run dev               # http://localhost:4000, API docs at /docs
 
 # 2. Web app (separate terminal)
@@ -178,9 +210,12 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-After seeding, sign in as `maya` (owner), `daniel` (admin) or `priya` (member). The
-password for every demo account is `pulseboard`. Open the same board in two browsers
-as different people to see live updates, presence and cursors.
+After seeding, open http://localhost:5173/demo and pick a role, or sign in as `ayesha`
+(owner), `bilal` (admin) or `hira` (member) with the password `pulseboard`. Open the same
+board in two browsers as different people to see live updates, presence and cursors.
+
+On a deployed server, use `npm run demo:reset` instead of `npm run seed`: it creates or
+rebuilds the demo without touching anyone else's data.
 
 Optional integrations are enabled independently via environment variables. See
 `Backend/.env.example` for the full list:
@@ -203,7 +238,8 @@ npm test
 
 Covers authentication flows, role-based access control enforced through the real HTTP
 API, workflow transition rules, sprint-velocity calculations, rate-limit accuracy and
-live Socket.IO events (presence, broadcasts, and removing people who lose access). The
+live Socket.IO events (presence, broadcasts, and removing people who lose access) and
+the demo mode guards. The
 API suites require a running MongoDB instance.
 
 ## API documentation
