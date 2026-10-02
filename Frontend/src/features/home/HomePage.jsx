@@ -115,6 +115,33 @@ function AuthActions({ compact }) {
   );
 }
 
+function LiveDot() {
+  return (
+    <span className="relative flex size-2">
+      <span className="absolute inline-flex size-full animate-ping rounded-full bg-ok opacity-60 motion-reduce:hidden" />
+      <span className="relative inline-flex size-2 rounded-full bg-ok" />
+    </span>
+  );
+}
+
+// The demo gets its own button rather than another nav link: it's the main thing a
+// first-time visitor should try.
+function DemoButton({ className }) {
+  return (
+    <Link
+      to="/demo"
+      className={cn(
+        'inline-flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-fg',
+        'transition-colors hover:border-line-strong hover:bg-subtle',
+        className,
+      )}
+    >
+      <LiveDot />
+      Live demo
+    </Link>
+  );
+}
+
 function SiteHeader() {
   const theme = useTheme();
   const [scrolled, setScrolled] = useState(false);
@@ -149,9 +176,6 @@ function SiteHeader() {
               {s.label}
             </a>
           ))}
-          <Link to="/demo" className="text-sm text-fg-muted transition-colors hover:text-fg">
-            Live demo
-          </Link>
           <Link to="/guide" className="text-sm text-fg-muted transition-colors hover:text-fg">
             Guide
           </Link>
@@ -170,16 +194,17 @@ function SiteHeader() {
           >
             {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </IconButton>
+          <DemoButton className="ml-1" />
+          <div className="ml-1 hidden sm:block">
+            <AuthActions compact />
+          </div>
           <IconButton
             label={mobileOpen ? 'Close menu' : 'Open menu'}
-            className="md:hidden"
+            className="ml-1 md:hidden"
             onClick={() => setMobileOpen((open) => !open)}
           >
             {mobileOpen ? <X className="size-4" /> : <MenuIcon className="size-4" />}
           </IconButton>
-          <div className="hidden sm:block">
-            <AuthActions compact />
-          </div>
         </div>
       </div>
 
@@ -203,13 +228,6 @@ function SiteHeader() {
                   {s.label}
                 </a>
               ))}
-              <Link
-                to="/demo"
-                onClick={closeMobile}
-                className="rounded-md px-2 py-2 text-sm text-fg-muted transition-colors hover:bg-hover hover:text-fg"
-              >
-                Live demo
-              </Link>
               <Link
                 to="/guide"
                 onClick={closeMobile}
