@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { ActivityModel } from '../activity/activity.model.js';
 import { colorFor } from '../auth/colors.js';
+import { RefreshTokenModel } from '../auth/refreshToken.model.js';
 import { UserModel } from '../auth/user.model.js';
 import { BoardModel } from '../boards/board.model.js';
 import { deleteBoards } from '../boards/board.service.js';
@@ -17,11 +18,19 @@ const DAY = 86_400_000;
 // than recreated, so visitors who are signed in keep their session.
 export async function resetDemo(now = Date.now()) {
   const users = await upsertDemoUsers();
-  const userIds = users.map((u) => u._id);
 
-  const oldWorkspaces = await WorkspaceModel.find({ 'members.user': { $in: userIds } }).distinct('_id');
+  // Includes demo accounts that have since been dropped from demoData, so renaming
+  // someone in the demo doesn't leave their old account behind.
+  const allDemoIds = await UserModel.find({ isDemo: true }).distinct('_id');
+  const oldWorkspaces = await WorkspaceModel.find({ 'members.user': { $in: allDemoIds } }).distinct('_id');
   await deleteBoards(await BoardModel.find({ workspace: { $in: oldWorkspaces } }).distinct('_id'));
   await WorkspaceModel.deleteMany({ _id: { $in: oldWorkspaces } });
+
+  const retired = allDemoIds.filter((id) => !users.some((u) => u._id.equals(id)));
+  await Promise.all([
+    UserModel.deleteMany({ _id: { $in: retired } }),
+    RefreshTokenModel.deleteMany({ user: { $in: retired } }),
+  ]);
 
   const workspace = await WorkspaceModel.create({
     name: DEMO_WORKSPACE,
@@ -63,6 +72,7 @@ async function upsertDemoUsers() {
 
     const fields = {
       ...person,
+      avatarUrl: person.avatarUrl ?? null,
       passwordHash,
       color: colorFor(person.email),
       isDemo: true,

@@ -6,7 +6,12 @@ export const DEMO_WORKSPACE = 'Margalla Labs';
 
 export const people = [
   { name: 'Ayesha Khan', username: 'ayesha', email: 'ayesha@margallalabs.dev' },
-  { name: 'Bilal Ahmed', username: 'bilal', email: 'bilal@margallalabs.dev' },
+  {
+    name: 'Azan Imtiaz',
+    username: 'azan',
+    email: 'azan@margallalabs.dev',
+    avatarUrl: 'https://github.com/Azan-imtiaz.png?size=96',
+  },
   { name: 'Hira Siddiqui', username: 'hira', email: 'hira@margallalabs.dev' },
   { name: 'Usman Tariq', username: 'usman', email: 'usman@margallalabs.dev' },
   { name: 'Fatima Malik', username: 'fatima', email: 'fatima@margallalabs.dev' },
@@ -26,7 +31,7 @@ export const personas = [
   },
   {
     role: 'admin',
-    username: 'bilal',
+    username: 'azan',
     title: 'Backend engineer',
     summary: 'Runs boards and manages members, but can only manage people ranked below him.',
   },
@@ -328,10 +333,10 @@ export const threads = [
       [3, 'Staging numbers look fine: p95 on session reads went from 1.8ms to 2.1ms. Well within budget.'],
       [
         2,
-        "@bilal refresh token rotation (PLAT-2) touches the same code path. Can we land that first so we don't rebase twice?",
+        "@azan refresh token rotation (PLAT-2) touches the same code path. Can we land that first so we don't rebase twice?",
       ],
       [1, "Agreed. I'll hold the flip until PLAT-2 is merged. Dual-writes can keep running in the meantime."],
-      [0, "Sounds good. @bilal owns the flip once PLAT-2 is in, targeting Thursday. Let's not do it on a Friday."],
+      [0, "Sounds good. @azan owns the flip once PLAT-2 is in, targeting Thursday. Let's not do it on a Friday."],
     ],
   ],
   [

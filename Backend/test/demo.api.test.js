@@ -66,7 +66,7 @@ describe('demo mode', () => {
       .set(owner)
       .send({ title: 'Try it out' })
       .expect(201);
-    await api.post(`/api/v1/tasks/${created.body.task.id}/comments`).set(owner).send({ body: 'Hello @bilal' }).expect(201);
+    await api.post(`/api/v1/tasks/${created.body.task.id}/comments`).set(owner).send({ body: 'Hello @azan' }).expect(201);
     // Tasks a visitor added can be cleaned up again.
     await api.delete(`/api/v1/tasks/${created.body.task.id}`).set(owner).expect(204);
   });
@@ -74,14 +74,14 @@ describe('demo mode', () => {
   it('locks changes that would spoil the demo for the next visitor', async () => {
     const owner = await signIn('owner');
     const seeded = await TaskModel.findOne({ board: boardId, number: 1 });
-    const bilal = await UserModel.findOne({ username: 'bilal' });
+    const azan = await UserModel.findOne({ username: 'azan' });
 
     // Built lazily: supertest starts a request as soon as it's created.
     const locked = [
       () => api.delete(`/api/v1/workspaces/${workspaceId}`),
       () => api.patch(`/api/v1/workspaces/${workspaceId}`).send({ name: 'Renamed' }),
-      () => api.delete(`/api/v1/workspaces/${workspaceId}/members/${bilal._id}`),
-      () => api.patch(`/api/v1/workspaces/${workspaceId}/members/${bilal._id}`).send({ role: 'member' }),
+      () => api.delete(`/api/v1/workspaces/${workspaceId}/members/${azan._id}`),
+      () => api.patch(`/api/v1/workspaces/${workspaceId}/members/${azan._id}`).send({ role: 'member' }),
       () => api.post(`/api/v1/workspaces/${workspaceId}/members`).send({ email: 'someone@example.com' }),
       () => api.post(`/api/v1/workspaces/${workspaceId}/boards`).send({ name: 'Junk', key: 'JUNK' }),
       () => api.delete(`/api/v1/boards/${boardId}`),
@@ -112,6 +112,20 @@ describe('demo mode', () => {
     expect(String(after._id)).toBe(String(before._id));
     const workspaces = await api.get('/api/v1/workspaces').set(owner).expect(200);
     expect(workspaces.body.workspaces).toHaveLength(1);
+  });
+
+  it('removes demo accounts that are no longer part of the demo', async () => {
+    await UserModel.create({
+      name: 'Old Teammate',
+      username: 'old.teammate',
+      email: 'old@margallalabs.dev',
+      passwordHash: 'x',
+      color: '#000',
+      isDemo: true,
+    });
+    await resetDemo();
+    expect(await UserModel.exists({ username: 'old.teammate' })).toBeNull();
+    expect(await UserModel.countDocuments({ isDemo: true })).toBe(6);
   });
 
   it('refuses to take over a real account that uses a demo username', async () => {

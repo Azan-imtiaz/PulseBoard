@@ -211,7 +211,7 @@ npm run dev               # http://localhost:5173
 ```
 
 After seeding, open http://localhost:5173/demo and pick a role, or sign in as `ayesha`
-(owner), `bilal` (admin) or `hira` (member) with the password `pulseboard`. Open the same
+(owner), `azan` (admin) or `hira` (member) with the password `pulseboard`. Open the same
 board in two browsers as different people to see live updates, presence and cursors.
 
 On a deployed server, use `npm run demo:reset` instead of `npm run seed`: it creates or

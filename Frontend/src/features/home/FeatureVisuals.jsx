@@ -2,20 +2,21 @@ import { Check, FileText, Mail, Search, X } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { Kbd } from '@/components/Kbd';
 import { StatusIcon } from '@/features/tasks/meta';
+import { author } from '@/lib/author';
 
 // Small static slices of the real interface, used to illustrate each feature on
 // the home page instead of generic icons.
 
 const ayesha = { name: 'Ayesha Khan', color: '#F76B15' };
 const hira = { name: 'Hira Siddiqui', color: '#8E4EC6' };
-const bilal = { name: 'Bilal Ahmed', color: '#0090FF' };
+const azan = { name: 'Azan Imtiaz', color: '#0090FF', avatarUrl: author.photo };
 
 export function PresenceVisual() {
   return (
     <div className="relative h-full min-h-40">
       <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full border border-line bg-surface py-1 pr-3 pl-1">
         <div className="flex">
-          {[ayesha, hira, bilal].map((p) => (
+          {[ayesha, hira, azan].map((p) => (
             <span key={p.name} className="-ml-1.5 rounded-full ring-2 ring-surface first:ml-0">
               <Avatar person={p} size={22} />
             </span>
@@ -26,7 +27,7 @@ export function PresenceVisual() {
         </span>
       </div>
       <MiniCursor person={hira} className="top-20 left-[38%]" />
-      <MiniCursor person={bilal} className="top-28 left-[12%]" />
+      <MiniCursor person={azan} className="top-28 left-[12%]" />
       <div className="absolute right-4 bottom-4 w-44 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-pop">
         <span className="font-medium">Hira</span> <span className="text-fg-muted">moved PLAT-3 to In Review</span>
       </div>
@@ -188,7 +189,7 @@ export function NotificationsVisual() {
       <div className="flex flex-1 items-start gap-2.5 rounded-lg border border-line bg-surface px-3 py-2.5 text-xs">
         <Mail className="mt-px size-4 shrink-0 text-fg-faint" />
         <span>
-          <span className="block font-medium">[PLAT-3] Bilal Ahmed mentioned you</span>
+          <span className="block font-medium">[PLAT-3] Azan Imtiaz mentioned you</span>
           <span className="text-fg-muted">"@hira can you review the retry limits?"</span>
         </span>
       </div>

@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/r
 import { cn } from '@/lib/cn';
 import { Avatar } from '@/components/Avatar';
 import { PriorityIcon, STATUS_LABEL, StatusIcon } from '@/features/tasks/meta';
+import { author } from '@/lib/author';
 
 // A scripted, non-interactive preview of a live board for the home page: two
 // teammates move cards while the presence and activity update. Drawn at a fixed
@@ -16,7 +17,7 @@ const LAST_STEP = 10;
 const people = {
   ayesha: { name: 'Ayesha Khan', color: '#F76B15' },
   hira: { name: 'Hira Siddiqui', color: '#8E4EC6' },
-  bilal: { name: 'Bilal Ahmed', color: '#0090FF' },
+  azan: { name: 'Azan Imtiaz', color: '#0090FF', avatarUrl: author.photo },
 };
 
 const cards = {
@@ -26,11 +27,11 @@ const cards = {
     who: 'fatima',
     label: 'notifications',
   },
-  'PLAT-17': { title: 'Cache board state for faster loads', priority: 'high', who: 'bilal', label: 'perf' },
+  'PLAT-17': { title: 'Cache board state for faster loads', priority: 'high', who: 'azan', label: 'perf' },
   'PLAT-5': { title: 'Audit log export (CSV)', priority: 'low', label: 'api' },
   'PLAT-3': { title: 'Webhook retries with exponential backoff', priority: 'high', who: 'hira', label: 'api' },
   'PLAT-21': { title: 'Flaky test: socket fan-out', priority: 'medium', who: 'ayesha', label: 'bug' },
-  'PLAT-2': { title: 'Rotate refresh tokens on every use', priority: 'high', who: 'bilal', label: 'security' },
+  'PLAT-2': { title: 'Rotate refresh tokens on every use', priority: 'high', who: 'azan', label: 'security' },
   'PLAT-6': { title: 'Rate limit the public API', priority: 'high', who: 'hira', label: 'api' },
   'PLAT-8': { title: 'Signed upload URLs for attachments', priority: 'medium', who: 'ayesha', label: 'api' },
 };
@@ -50,14 +51,14 @@ function columnsAt(step) {
 
 const cursorPath = {
   hira: [[900, 330], [420, 84], [420, 84], [690, 84], [690, 84], [720, 250], [760, 290]],
-  bilal: [[170, 320], [200, 230], [170, 250], [140, 84], [140, 84], [140, 84], [410, 84], [410, 84], [450, 230]],
+  azan: [[170, 320], [200, 230], [170, 250], [140, 84], [140, 84], [140, 84], [410, 84], [410, 84], [450, 230]],
 };
 
 const at = (path, step) => path[Math.min(step, path.length - 1)];
 
 const activity = {
   4: { who: 'hira', text: 'moved PLAT-3 to In Review' },
-  7: { who: 'bilal', text: 'started PLAT-20' },
+  7: { who: 'azan', text: 'started PLAT-20' },
 };
 
 export function HeroBoard() {
@@ -137,7 +138,7 @@ export function HeroBoard() {
           </LayoutGroup>
 
           <Cursor person={people.hira} position={at(cursorPath.hira, step)} />
-          <Cursor person={people.bilal} position={at(cursorPath.bilal, step)} />
+          <Cursor person={people.azan} position={at(cursorPath.azan, step)} />
 
           <AnimatePresence>
             {latest && (
