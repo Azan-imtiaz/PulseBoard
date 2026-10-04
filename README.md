@@ -140,7 +140,7 @@ Demo mode is built so a public demo stays usable for the next visitor:
 | **Frontend** | React 19, Vite, Tailwind CSS 4, Radix UI, TanStack Query, react-router, dnd-kit |
 | **AI** | Thread summaries and structured suggestions via an OpenAI-compatible chat API |
 | **Storage** | S3-compatible object storage (presigned uploads/downloads) |
-| **Email** | SMTP via Nodemailer |
+| **Email** | Brevo HTTP API, with Gmail SMTP (Nodemailer) as a local fallback |
 | **Testing** | Vitest, Supertest, socket.io-client |
 
 ## Architecture notes
@@ -225,9 +225,11 @@ Optional integrations are enabled independently via environment variables. See
   suggestions. Without it, those panels report that AI is disabled and the rest of the
   app is unaffected.
 - **File attachments**: set the `S3_*` variables to point at an S3-compatible bucket.
-- **Email**: set `GMAIL_USER` / `GMAIL_APP_PASSWORD` (or adapt `services/email.js` for
-  another provider). Without it, outbound email is logged to the console instead of
-  sent, so local development doesn't require a mail account.
+- **Email**: set `BREVO_API_KEY` and a verified sender in `MAIL_FROM`. Brevo is called
+  over HTTPS, so it also works on hosts that block outbound SMTP (such as Render's free
+  tier). `GMAIL_USER` / `GMAIL_APP_PASSWORD` is used instead when no Brevo key is set.
+  With neither, outbound email is logged to the console, so local development doesn't
+  require a mail account.
 
 ## Tests
 

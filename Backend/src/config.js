@@ -28,6 +28,8 @@ const schema = z.object({
   S3_ACCESS_KEY_ID: optional,
   S3_SECRET_ACCESS_KEY: optional,
 
+  // Brevo's HTTP API is used when set; otherwise Gmail SMTP, if configured.
+  BREVO_API_KEY: optional,
   GMAIL_USER: optional,
   GMAIL_APP_PASSWORD: optional,
   MAIL_FROM: optional,
